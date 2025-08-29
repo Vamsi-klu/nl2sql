@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL2SQL - AI-Powered SQL Query Generator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient)"/>
+                        <path d="M2 17L12 22L22 17" stroke="url(#gradient)"/>
+                        <path d="M2 12L12 17L22 12" stroke="url(#gradient)"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h1>NL2SQL</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="apiKeyBtn" class="btn-icon" title="API Settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M21 12h-6m-6 0H3m13.22 4.22l4.24 4.24M1.54 21.54l4.24-4.24"/>
+                        </svg>
+                    </button>
+                    <button id="historyBtn" class="btn-icon" title="Query History">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                        </svg>
+                    </button>
+                    <button id="helpBtn" class="btn-icon" title="Help">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Schema Section -->
+            <section class="schema-section">
+                <div class="section-header">
+                    <h2>Database Schema</h2>
+                    <div class="schema-actions">
+                        <select id="schemaFormat" class="select-input">
+                            <option value="auto_detect">Auto Detect</option>
+                            <option value="sql_ddl">SQL DDL</option>
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV Headers</option>
+                            <option value="natural_language">Natural Language</option>
+                        </select>
+                        <button id="uploadSchemaBtn" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Upload
+                        </button>
+                        <button id="loadSampleBtn" class="btn btn-secondary">Sample</button>
+                    </div>
+                </div>
+                
+                <div class="schema-input-container">
+                    <textarea id="schemaInput" class="schema-input" placeholder="Paste your database schema here...
+
+Example SQL DDL:
+CREATE TABLE customers (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(255),
+  email VARCHAR(255),
+  country VARCHAR(100)
+);
+
+Or JSON:
+{
+  &quot;customers&quot;: [
+    {&quot;name&quot;: &quot;id&quot;, &quot;type&quot;: &quot;INTEGER&quot;},
+    {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;VARCHAR(255)&quot;}
+  ]
+}
+
+Or Natural Language:
+I have a customers table with id, name, email, and country fields"></textarea>
+                </div>
+                
+                <div id="schemaPreview" class="schema-preview hidden">
+                    <h3>Parsed Schema</h3>
+                    <div id="schemaContent" class="schema-content"></div>
+                </div>
+            </section>
+
+            <!-- Query Section -->
+            <section class="query-section">
+                <div class="section-header">
+                    <h2>Natural Language Query</h2>
+                    <div class="query-actions">
+                        <select id="dialectSelect" class="select-input">
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="sqlite">SQLite</option>
+                            <option value="sqlserver">SQL Server</option>
+                            <option value="oracle">Oracle</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="query-input-container">
+                    <textarea id="queryInput" class="query-input" placeholder="Ask anything about your data in plain English...
+
+Examples:
+• Show me all customers from USA
+• What's the total revenue by product category?
+• Find the top 10 customers by order value
+• Which products are running low on stock?
+• Calculate the average order value per country"></textarea>
+                    
+                    <div class="query-suggestions" id="querySuggestions">
+                        <!-- Suggestions will be added dynamically -->
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="generateBtn" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Generate SQL
+                    </button>
+                    <button id="executeBtn" class="btn btn-success" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Execute Query
+                    </button>
+                    <button id="optimizeBtn" class="btn btn-secondary" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        Optimize
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <div class="tabs">
+                    <button class="tab active" data-tab="sql">SQL Query</button>
+                    <button class="tab" data-tab="explanation">Explanation</button>
+                    <button class="tab" data-tab="results">Results</button>
+                    <button class="tab" data-tab="optimization">Optimization</button>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- SQL Tab -->
+                    <div id="sqlTab" class="tab-pane active">
+                        <div class="sql-header">
+                            <div class="confidence-badge" id="confidenceBadge">
+                                Confidence: <span id="confidenceValue">-</span>
+                            </div>
+                            <button id="copySqlBtn" class="btn-icon" title="Copy SQL">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <pre id="sqlOutput" class="sql-output"><code>-- Your generated SQL will appear here</code></pre>
+                        
+                        <div id="alternativeQueries" class="alternative-queries hidden">
+                            <h4>Alternative Queries</h4>
+                            <div id="alternativeList"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Explanation Tab -->
+                    <div id="explanationTab" class="tab-pane">
+                        <div id="explanationContent" class="explanation-content">
+                            <p>Generate a query to see the explanation...</p>
+                        </div>
+                        
+                        <div id="warnings" class="warnings hidden">
+                            <h4>⚠️ Warnings</h4>
+                            <ul id="warningsList"></ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Tab -->
+                    <div id="resultsTab" class="tab-pane">
+                        <div id="executionStats" class="execution-stats hidden">
+                            <span>Rows: <strong id="rowCount">0</strong></span>
+                            <span>Time: <strong id="execTime">0ms</strong></span>
+                            <button id="exportBtn" class="btn-icon" title="Export Results">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div id="resultsTable" class="results-table-container">
+                            <p>Execute a query to see results...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Optimization Tab -->
+                    <div id="optimizationTab" class="tab-pane">
+                        <div id="optimizationContent" class="optimization-content">
+                            <p>Click "Optimize" to see optimization suggestions...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loadingMessage">Processing...</p>
+            </div>
+        </div>
+
+        <!-- API Key Modal -->
+        <div id="apiKeyModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>OpenAI API Configuration</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="openaiApiKey">OpenAI API Key <span style="color: red;">*</span></label>
+                        <input type="password" id="openaiApiKey" class="input" placeholder="sk-..." required>
+                        <small>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="openaiModel">Model</label>
+                        <select id="openaiModel" class="select-input">
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast & Cheap)</option>
+                            <option value="gpt-4">GPT-4 (Most Capable)</option>
+                            <option value="gpt-4-turbo-preview">GPT-4 Turbo (Latest)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="apiEndpoint">API Endpoint (Optional)</label>
+                        <input type="text" id="apiEndpoint" class="input" placeholder="http://localhost:3000">
+                    </div>
+                    <div id="apiKeyStatus" class="api-status hidden">
+                        <div class="status-message"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="validateApiKey" class="btn btn-secondary">Validate Key</button>
+                    <button id="saveApiKey" class="btn btn-primary" disabled>Save & Connect</button>
+                    <button class="btn btn-secondary close-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query History Modal -->
+        <div id="historyModal" class="modal hidden">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>Query History</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="historyList" class="history-list">
+                        <!-- History items will be added dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="clearHistory" class="btn btn-danger">Clear History</button>
+                    <button class="btn btn-secondary close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

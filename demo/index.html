@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL2SQL - Natural Language to SQL Query Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .nl-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .nl-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .schema-section {
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .schema-table {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .table-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .column-list {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .column-item {
+            background: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sql-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            min-height: 100px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .explanation-output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .results-table th {
+            background: #f0f0f0;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .results-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .examples {
+            margin-top: 20px;
+        }
+
+        .example-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .example-item:hover {
+            background: #e8e9ea;
+            transform: translateX(5px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #efe;
+            color: #060;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#667eea"/>
+                <path d="M2 17L12 22L22 17" stroke="#764ba2"/>
+                <path d="M2 12L12 17L22 12" stroke="#9b6dd4"/>
+            </svg>
+            NL2SQL Query Engine
+        </h1>
+        <div class="subtitle">Transform natural language into optimized SQL queries with AI-powered understanding</div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <div class="panel-header">Query Input</div>
+            
+            <div class="input-section">
+                <label class="input-label">Enter your question in natural language:</label>
+                <textarea class="nl-input" id="nlInput" placeholder="Example: Show me the top 5 customers who ordered the most products in the last 30 days"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="executeQuery()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Generate SQL
+                </button>
+                <button class="btn btn-secondary" onclick="clearAll()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+
+            <div class="panel-header">Database Schema</div>
+            <div class="schema-section" id="schemaSection">
+                <div class="schema-table">
+                    <div class="table-name">customers</div>
+                    <div class="column-list">
+                        <span class="column-item">id</span>
+                        <span class="column-item">name</span>
+                        <span class="column-item">email</span>
+                        <span class="column-item">country</span>
+                        <span class="column-item">created_at</span>
+                    </div>
+                </div>
+                <div class="schema-table">
+                    <div class="table-name">orders</div>
+                    <div class="column-list">
+                        <span class="column-item">id</span>
+                        <span class="column-item">customer_id</span>
+                        <span class="column-item">total_amount</span>
+                        <span class="column-item">status</span>
+                        <span class="column-item">order_date</span>
+                    </div>
+                </div>
+                <div class="schema-table">
+                    <div class="table-name">products</div>
+                    <div class="column-list">
+                        <span class="column-item">id</span>
+                        <span class="column-item">name</span>
+                        <span class="column-item">price</span>
+                        <span class="column-item">category</span>
+                        <span class="column-item">stock</span>
+                    </div>
+                </div>
+                <div class="schema-table">
+                    <div class="table-name">order_items</div>
+                    <div class="column-list">
+                        <span class="column-item">order_id</span>
+                        <span class="column-item">product_id</span>
+                        <span class="column-item">quantity</span>
+                        <span class="column-item">unit_price</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-header">Example Queries</div>
+            <div class="examples">
+                <div class="example-item" onclick="setExample('Show all customers from USA')">
+                    Show all customers from USA
+                </div>
+                <div class="example-item" onclick="setExample('What is the total revenue for each product category?')">
+                    What is the total revenue for each product category?
+                </div>
+                <div class="example-item" onclick="setExample('Find customers who have never placed an order')">
+                    Find customers who have never placed an order
+                </div>
+                <div class="example-item" onclick="setExample('Top 10 products by sales in the last quarter')">
+                    Top 10 products by sales in the last quarter
+                </div>
+                <div class="example-item" onclick="setExample('Average order value by country')">
+                    Average order value by country
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Query Results</div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('sql')">SQL Query</div>
+                <div class="tab" onclick="switchTab('explanation')">Explanation</div>
+                <div class="tab" onclick="switchTab('results')">Results</div>
+                <div class="tab" onclick="switchTab('plan')">Query Plan</div>
+            </div>
+
+            <div class="output-section">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 10px; color: #666;">Analyzing query...</p>
+                </div>
+
+                <div class="tab-content active" id="sql-tab">
+                    <div class="sql-output" id="sqlOutput">
+                        <button class="copy-btn" onclick="copySQL()">Copy</button>
+                        <pre id="sqlCode">-- Generated SQL will appear here</pre>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="execTime">0ms</div>
+                            <div class="stat-label">Execution Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="rowCount">0</div>
+                            <div class="stat-label">Rows Returned</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="complexity">Simple</div>
+                            <div class="stat-label">Complexity</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="explanation-tab">
+                    <div class="explanation-output" id="explanationOutput">
+                        Query explanation will appear here...
+                    </div>
+                </div>
+
+                <div class="tab-content" id="results-tab">
+                    <div id="resultsOutput">
+                        <table class="results-table" id="resultsTable">
+                            <thead id="resultsHeader"></thead>
+                            <tbody id="resultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="plan-tab">
+                    <div class="explanation-output" id="planOutput">
+                        Query execution plan will appear here...
+                    </div>
+                </div>
+
+                <div id="errorMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock NL2SQL API
+        class NL2SQLEngine {
+            constructor() {
+                this.schema = {
+                    customers: ['id', 'name', 'email', 'country', 'created_at'],
+                    orders: ['id', 'customer_id', 'total_amount', 'status', 'order_date'],
+                    products: ['id', 'name', 'price', 'category', 'stock'],
+                    order_items: ['order_id', 'product_id', 'quantity', 'unit_price']
+                };
+            }
+
+            async process(nlQuery) {
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const query = nlQuery.toLowerCase();
+                let sql = '';
+                let explanation = '';
+                let complexity = 'Simple';
+                let results = [];
+
+                // Pattern matching for common queries
+                if (query.includes('customers') && query.includes('usa')) {
+                    sql = "SELECT * FROM customers WHERE country = 'USA'";
+                    explanation = "This query retrieves all customer records where the country field equals 'USA'. It performs a simple filter operation on the customers table.";
+                    results = [
+                        { id: 1, name: 'John Doe', email: 'john@example.com', country: 'USA', created_at: '2024-01-15' },
+                        { id: 2, name: 'Jane Smith', email: 'jane@example.com', country: 'USA', created_at: '2024-02-20' }
+                    ];
+                } else if (query.includes('revenue') && query.includes('category')) {
+                    sql = `SELECT p.category, SUM(oi.quantity * oi.unit_price) as total_revenue
+FROM products p
+JOIN order_items oi ON p.id = oi.product_id
+GROUP BY p.category
+ORDER BY total_revenue DESC`;
+                    explanation = "This query calculates total revenue by product category. It joins the products and order_items tables, groups results by category, and sums the revenue (quantity × unit_price) for each group.";
+                    complexity = 'Moderate';
+                    results = [
+                        { category: 'Electronics', total_revenue: 125000 },
+                        { category: 'Clothing', total_revenue: 89000 },
+                        { category: 'Books', total_revenue: 45000 }
+                    ];
+                } else if (query.includes('never placed') && query.includes('order')) {
+                    sql = `SELECT c.* FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id
+WHERE o.id IS NULL`;
+                    explanation = "This query finds customers who have never placed an order. It uses a LEFT JOIN between customers and orders tables, then filters for rows where the order ID is NULL, indicating no matching orders.";
+                    complexity = 'Moderate';
+                    results = [
+                        { id: 5, name: 'Bob Wilson', email: 'bob@example.com', country: 'Canada', created_at: '2024-03-10' }
+                    ];
+                } else if (query.includes('top') && query.includes('products')) {
+                    sql = `SELECT p.name, p.category, SUM(oi.quantity) as units_sold, 
+       SUM(oi.quantity * oi.unit_price) as revenue
+FROM products p
+JOIN order_items oi ON p.id = oi.product_id
+JOIN orders o ON oi.order_id = o.id
+WHERE o.order_date >= DATE('now', '-3 months')
+GROUP BY p.id, p.name, p.category
+ORDER BY revenue DESC
+LIMIT 10`;
+                    explanation = "This query identifies the top 10 products by sales revenue in the last quarter. It joins products, order_items, and orders tables, filters by date range, groups by product, and sorts by revenue in descending order.";
+                    complexity = 'Complex';
+                    results = [
+                        { name: 'iPhone 15', category: 'Electronics', units_sold: 450, revenue: 450000 },
+                        { name: 'MacBook Pro', category: 'Electronics', units_sold: 120, revenue: 240000 },
+                        { name: 'Nike Air Max', category: 'Footwear', units_sold: 800, revenue: 120000 }
+                    ];
+                } else if (query.includes('average') && query.includes('order') && query.includes('country')) {
+                    sql = `SELECT c.country, AVG(o.total_amount) as avg_order_value, COUNT(o.id) as order_count
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+GROUP BY c.country
+ORDER BY avg_order_value DESC`;
+                    explanation = "This query calculates the average order value by country. It joins customers and orders tables, groups by country, and computes the average total_amount for each country's orders.";
+                    complexity = 'Moderate';
+                    results = [
+                        { country: 'Switzerland', avg_order_value: 850.50, order_count: 45 },
+                        { country: 'USA', avg_order_value: 650.25, order_count: 320 },
+                        { country: 'UK', avg_order_value: 580.75, order_count: 180 }
+                    ];
+                } else {
+                    // Default fallback
+                    sql = `SELECT * FROM customers LIMIT 10`;
+                    explanation = "Unable to fully understand the query. Showing a sample query that retrieves the first 10 customers.";
+                    results = [
+                        { id: 1, name: 'Sample Customer', email: 'sample@example.com', country: 'USA', created_at: '2024-01-01' }
+                    ];
+                }
+
+                return {
+                    sql: sql,
+                    explanation: explanation,
+                    complexity: complexity,
+                    executionTime: Math.floor(Math.random() * 50) + 10,
+                    rowCount: results.length,
+                    results: results,
+                    plan: this.generateQueryPlan(sql, complexity)
+                };
+            }
+
+            generateQueryPlan(sql, complexity) {
+                const plans = {
+                    'Simple': `Query Execution Plan:
+1. Sequential Scan on customers
+   - Filter: (country = 'USA')
+   - Estimated rows: 50
+   - Cost: 10.00
+
+Total execution cost: 10.00`,
+                    'Moderate': `Query Execution Plan:
+1. Hash Join
+   - Hash Cond: (customers.id = orders.customer_id)
+   
+   2. Sequential Scan on customers
+      - Estimated rows: 1000
+      - Cost: 20.00
+   
+   3. Hash
+      4. Sequential Scan on orders
+         - Estimated rows: 5000
+         - Cost: 100.00
+
+Total execution cost: 120.00`,
+                    'Complex': `Query Execution Plan:
+1. Sort
+   - Sort Key: revenue DESC
+   
+   2. HashAggregate
+      - Group Key: products.id, products.name
+      
+      3. Hash Join
+         - Hash Cond: (order_items.order_id = orders.id)
+         
+         4. Hash Join
+            - Hash Cond: (products.id = order_items.product_id)
+            
+            5. Sequential Scan on products
+               - Estimated rows: 500
+               - Cost: 10.00
+            
+            6. Hash
+               7. Sequential Scan on order_items
+                  - Estimated rows: 10000
+                  - Cost: 200.00
+         
+         8. Hash
+            9. Sequential Scan on orders
+               - Filter: (order_date >= DATE('now', '-3 months'))
+               - Estimated rows: 2000
+               - Cost: 50.00
+
+Total execution cost: 260.00`
+                };
+                return plans[complexity] || plans['Simple'];
+            }
+        }
+
+        const engine = new NL2SQLEngine();
+
+        async function executeQuery() {
+            const input = document.getElementById('nlInput').value.trim();
+            if (!input) {
+                showError('Please enter a query');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            clearResults();
+
+            try {
+                const result = await engine.process(input);
+                
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                
+                // Display SQL
+                document.getElementById('sqlCode').textContent = formatSQL(result.sql);
+                
+                // Display explanation
+                document.getElementById('explanationOutput').innerHTML = `
+                    <h3 style="margin-bottom: 10px; color: #333;">Query Breakdown</h3>
+                    <p>${result.explanation}</p>
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 6px;">
+                        <strong>Optimization Notes:</strong>
+                        <ul style="margin-top: 5px; margin-left: 20px;">
+                            <li>Indexes used: customer_id, product_id</li>
+                            <li>Join method: Hash Join (optimal for this dataset)</li>
+                            <li>Estimated cost: ${result.executionTime * 2}</li>
+                        </ul>
+                    </div>
+                `;
+                
+                // Display stats
+                document.getElementById('execTime').textContent = result.executionTime + 'ms';
+                document.getElementById('rowCount').textContent = result.rowCount;
+                document.getElementById('complexity').textContent = result.complexity;
+                
+                // Display results
+                displayResults(result.results);
+                
+                // Display query plan
+                document.getElementById('planOutput').innerHTML = `<pre style="font-family: monospace; font-size: 12px;">${result.plan}</pre>`;
+                
+                showSuccess('Query executed successfully');
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                showError('Error processing query: ' + error.message);
+            }
+        }
+
+        function formatSQL(sql) {
+            // Basic SQL formatting
+            return sql
+                .replace(/SELECT/g, 'SELECT')
+                .replace(/FROM/g, '\nFROM')
+                .replace(/JOIN/g, '\nJOIN')
+                .replace(/WHERE/g, '\nWHERE')
+                .replace(/GROUP BY/g, '\nGROUP BY')
+                .replace(/ORDER BY/g, '\nORDER BY')
+                .replace(/LIMIT/g, '\nLIMIT');
+        }
+
+        function displayResults(results) {
+            if (!results || results.length === 0) {
+                document.getElementById('resultsOutput').innerHTML = '<p style="color: #666;">No results found</p>';
+                return;
+            }
+
+            const headers = Object.keys(results[0]);
+            const headerRow = headers.map(h => `<th>${h}</th>`).join('');
+            document.getElementById('resultsHeader').innerHTML = `<tr>${headerRow}</tr>`;
+
+            const rows = results.map(row => {
+                const cells = headers.map(h => `<td>${row[h] || ''}</td>`).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+            document.getElementById('resultsBody').innerHTML = rows;
+        }
+
+        function setExample(query) {
+            document.getElementById('nlInput').value = query;
+        }
+
+        function clearAll() {
+            document.getElementById('nlInput').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('sqlCode').textContent = '-- Generated SQL will appear here';
+            document.getElementById('explanationOutput').innerHTML = 'Query explanation will appear here...';
+            document.getElementById('resultsHeader').innerHTML = '';
+            document.getElementById('resultsBody').innerHTML = '';
+            document.getElementById('planOutput').innerHTML = 'Query execution plan will appear here...';
+            document.getElementById('errorMessage').innerHTML = '';
+            document.getElementById('execTime').textContent = '0ms';
+            document.getElementById('rowCount').textContent = '0';
+            document.getElementById('complexity').textContent = 'Simple';
+        }
+
+        function switchTab(tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function copySQL() {
+            const sql = document.getElementById('sqlCode').textContent;
+            navigator.clipboard.writeText(sql).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => {
+                document.getElementById('errorMessage').innerHTML = '';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            document.getElementById('errorMessage').innerHTML = `<div class="success">${message}</div>`;
+            setTimeout(() => {
+                document.getElementById('errorMessage').innerHTML = '';
+            }, 3000);
+        }
+
+        // Allow Enter key to execute query (Shift+Enter for new line)
+        document.getElementById('nlInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                executeQuery();
+            }
+        });
+    </script>
+</body>
+</html>

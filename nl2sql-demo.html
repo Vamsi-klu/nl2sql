@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL2SQL Demo - Natural Language to SQL</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .input-area {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        .input-area:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .schema-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            background: white;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .output-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 150px;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .explanation-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .example-chip {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .example-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .results-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 NL2SQL Query Engine</h1>
+            <p>Transform natural language into optimized SQL queries instantly</p>
+        </div>
+        
+        <div class="content">
+            <div class="left-panel">
+                <div class="section">
+                    <h2 class="section-title">📝 Natural Language Query</h2>
+                    <textarea 
+                        id="nlInput" 
+                        class="input-area" 
+                        placeholder="Enter your question in plain English...&#10;Example: Show me all customers from USA who ordered more than $1000 worth of products"
+                    ></textarea>
+                    
+                    <div class="examples">
+                        <div class="example-chip" onclick="setExample('Show all customers from USA')">
+                            Customers from USA
+                        </div>
+                        <div class="example-chip" onclick="setExample('Total revenue by product category')">
+                            Revenue by Category
+                        </div>
+                        <div class="example-chip" onclick="setExample('Top 5 customers by order value')">
+                            Top Customers
+                        </div>
+                        <div class="example-chip" onclick="setExample('Products with low stock')">
+                            Low Stock Alert
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section" style="margin-top: 20px;">
+                    <h2 class="section-title">📊 Database Schema</h2>
+                    <textarea id="schemaInput" class="schema-input">
+Tables:
+- customers (id, name, email, country, created_at)
+- orders (id, customer_id, total_amount, status, order_date)
+- products (id, name, price, category, stock)
+- order_items (order_id, product_id, quantity, unit_price)</textarea>
+                    
+                    <button class="btn" onclick="generateSQL()">
+                        ⚡ Generate SQL
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAll()">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="section">
+                    <h2 class="section-title">💻 Generated SQL Query</h2>
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 10px;">Analyzing your query...</p>
+                    </div>
+                    <div class="output-box" id="sqlOutput">-- Your SQL query will appear here</div>
+                </div>
+                
+                <div class="section" style="margin-top: 20px;">
+                    <h2 class="section-title">💡 Query Explanation</h2>
+                    <div class="explanation-box" id="explanation">
+                        Query explanation and optimization insights will appear here...
+                    </div>
+                </div>
+                
+                <div class="section" style="margin-top: 20px;">
+                    <h2 class="section-title">📈 Sample Results</h2>
+                    <div id="resultsContainer">
+                        <p style="color: #666;">Execute a query to see results...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function generateSQL() {
+            const nlQuery = document.getElementById('nlInput').value.trim();
+            const schema = document.getElementById('schemaInput').value;
+            
+            if (!nlQuery) {
+                alert('Please enter a natural language query');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('sqlOutput').style.display = 'none';
+            
+            // Simulate processing
+            setTimeout(() => {
+                const result = processQuery(nlQuery, schema);
+                
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('sqlOutput').style.display = 'block';
+                
+                // Display results
+                document.getElementById('sqlOutput').textContent = result.sql;
+                document.getElementById('explanation').innerHTML = result.explanation;
+                document.getElementById('resultsContainer').innerHTML = result.resultsHTML;
+            }, 1500);
+        }
+        
+        function processQuery(query, schema) {
+            const q = query.toLowerCase();
+            let sql = '';
+            let explanation = '';
+            let resultsHTML = '';
+            
+            if (q.includes('customers') && q.includes('usa')) {
+                sql = `SELECT *
+FROM customers
+WHERE country = 'USA'
+ORDER BY created_at DESC;`;
+                
+                explanation = `<strong>Query Analysis:</strong><br>
+• Selecting all columns from the customers table<br>
+• Filtering records where country equals 'USA'<br>
+• Ordering results by creation date (newest first)<br>
+<br>
+<strong>Optimization:</strong> Consider adding an index on the 'country' column for faster filtering.`;
+                
+                resultsHTML = `
+                    <table class="results-table">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Country</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>John Doe</td>
+                            <td>john@example.com</td>
+                            <td>USA</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Jane Smith</td>
+                            <td>jane@example.com</td>
+                            <td>USA</td>
+                        </tr>
+                    </table>`;
+            } else if (q.includes('revenue') && q.includes('category')) {
+                sql = `SELECT 
+    p.category,
+    COUNT(DISTINCT o.id) as order_count,
+    SUM(oi.quantity * oi.unit_price) as total_revenue,
+    AVG(oi.quantity * oi.unit_price) as avg_order_value
+FROM products p
+JOIN order_items oi ON p.id = oi.product_id
+JOIN orders o ON oi.order_id = o.id
+GROUP BY p.category
+ORDER BY total_revenue DESC;`;
+                
+                explanation = `<strong>Query Analysis:</strong><br>
+• Joining products, order_items, and orders tables<br>
+• Grouping results by product category<br>
+• Calculating total revenue and average order value<br>
+• Sorting by total revenue in descending order<br>
+<br>
+<strong>Performance:</strong> This query uses efficient hash joins and aggregation.`;
+                
+                resultsHTML = `
+                    <table class="results-table">
+                        <tr>
+                            <th>Category</th>
+                            <th>Orders</th>
+                            <th>Total Revenue</th>
+                            <th>Avg Order Value</th>
+                        </tr>
+                        <tr>
+                            <td>Electronics</td>
+                            <td>245</td>
+                            <td>$125,450</td>
+                            <td>$512</td>
+                        </tr>
+                        <tr>
+                            <td>Clothing</td>
+                            <td>189</td>
+                            <td>$67,890</td>
+                            <td>$359</td>
+                        </tr>
+                    </table>`;
+            } else if (q.includes('top') && q.includes('customers')) {
+                sql = `SELECT 
+    c.id,
+    c.name,
+    c.country,
+    COUNT(o.id) as order_count,
+    SUM(o.total_amount) as total_spent
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id, c.name, c.country
+ORDER BY total_spent DESC
+LIMIT 5;`;
+                
+                explanation = `<strong>Query Analysis:</strong><br>
+• Joining customers and orders tables<br>
+• Grouping by customer to aggregate order data<br>
+• Calculating total spent per customer<br>
+• Limiting to top 5 results<br>
+<br>
+<strong>Index Recommendation:</strong> Index on customer_id in orders table will speed up this join.`;
+                
+                resultsHTML = `
+                    <table class="results-table">
+                        <tr>
+                            <th>Name</th>
+                            <th>Country</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                        </tr>
+                        <tr>
+                            <td>Alice Johnson</td>
+                            <td>USA</td>
+                            <td>47</td>
+                            <td>$15,234</td>
+                        </tr>
+                        <tr>
+                            <td>Bob Wilson</td>
+                            <td>Canada</td>
+                            <td>35</td>
+                            <td>$12,456</td>
+                        </tr>
+                    </table>`;
+            } else if (q.includes('low stock') || q.includes('stock')) {
+                sql = `SELECT 
+    id,
+    name,
+    category,
+    stock,
+    price
+FROM products
+WHERE stock < 10
+ORDER BY stock ASC;`;
+                
+                explanation = `<strong>Query Analysis:</strong><br>
+• Scanning products table<br>
+• Filtering for items with stock below 10 units<br>
+• Ordering by stock level (lowest first)<br>
+<br>
+<strong>Alert:</strong> These products need immediate restocking!`;
+                
+                resultsHTML = `
+                    <table class="results-table">
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Stock</th>
+                            <th>Price</th>
+                        </tr>
+                        <tr>
+                            <td>Widget Pro</td>
+                            <td>Electronics</td>
+                            <td>3</td>
+                            <td>$299</td>
+                        </tr>
+                        <tr>
+                            <td>Super Gadget</td>
+                            <td>Electronics</td>
+                            <td>7</td>
+                            <td>$199</td>
+                        </tr>
+                    </table>`;
+            } else {
+                sql = `-- Unable to parse query. Here's a template:
+SELECT column1, column2
+FROM table_name
+WHERE condition
+ORDER BY column1;`;
+                
+                explanation = `<strong>Tips for better results:</strong><br>
+• Mention specific table names from your schema<br>
+• Use action words like "show", "find", "calculate"<br>
+• Specify filters like "where", "greater than", "between"<br>
+• Include aggregations like "total", "average", "count"`;
+                
+                resultsHTML = '<p style="color: #666;">No results to display. Try one of the example queries!</p>';
+            }
+            
+            return { sql, explanation, resultsHTML };
+        }
+        
+        function setExample(query) {
+            document.getElementById('nlInput').value = query;
+        }
+        
+        function clearAll() {
+            document.getElementById('nlInput').value = '';
+            document.getElementById('sqlOutput').textContent = '-- Your SQL query will appear here';
+            document.getElementById('explanation').innerHTML = 'Query explanation and optimization insights will appear here...';
+            document.getElementById('resultsContainer').innerHTML = '<p style="color: #666;">Execute a query to see results...</p>';
+        }
+        
+        // Allow Enter key to generate SQL
+        document.getElementById('nlInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                generateSQL();
+            }
+        });
+    </script>
+</body>
+</html>
