@@ -3,301 +3,429 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NL2SQL - AI-Powered SQL Query Generator</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Advanced NL2SQL - Natural Language to SQL Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        success: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        },
+                        warning: {
+                            50: '#fefce8',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        },
+                        error: {
+                            50: '#fef2f2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .code-editor {
+            font-family: 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .file-drag-over {
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+    </style>
 </head>
-<body>
-    <div class="app-container">
+<body class="bg-gray-50 min-h-screen">
+    <div x-data="nl2sqlApp()" class="min-h-screen">
         <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <div class="logo">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient)"/>
-                        <path d="M2 17L12 22L22 17" stroke="url(#gradient)"/>
-                        <path d="M2 12L12 17L22 12" stroke="url(#gradient)"/>
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#667eea"/>
-                                <stop offset="100%" stop-color="#764ba2"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <h1>NL2SQL</h1>
-                </div>
-                <div class="header-actions">
-                    <button id="apiKeyBtn" class="btn-icon" title="API Settings">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M21 12h-6m-6 0H3m13.22 4.22l4.24 4.24M1.54 21.54l4.24-4.24"/>
-                        </svg>
-                    </button>
-                    <button id="historyBtn" class="btn-icon" title="Query History">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="1 4 1 10 7 10"/>
-                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                        </svg>
-                    </button>
-                    <button id="helpBtn" class="btn-icon" title="Help">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                            <line x1="12" y1="17" x2="12.01" y2="17"/>
-                        </svg>
-                    </button>
+        <header class="gradient-bg shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-database text-3xl text-white mr-3"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">Advanced NL2SQL</h1>
+                            <p class="text-blue-100">Transform natural language to SQL with AI</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-white text-right">
+                            <div class="text-sm opacity-75">Session ID</div>
+                            <div class="font-mono text-xs" x-text="sessionId ? sessionId.substring(0, 8) + '...' : 'Loading...'"></div>
+                        </div>
+                        <button @click="showSettings = true" 
+                                class="glass-effect text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Schema Section -->
-            <section class="schema-section">
-                <div class="section-header">
-                    <h2>Database Schema</h2>
-                    <div class="schema-actions">
-                        <select id="schemaFormat" class="select-input">
-                            <option value="auto_detect">Auto Detect</option>
-                            <option value="sql_ddl">SQL DDL</option>
-                            <option value="json">JSON</option>
-                            <option value="csv">CSV Headers</option>
-                            <option value="natural_language">Natural Language</option>
-                        </select>
-                        <button id="uploadSchemaBtn" class="btn btn-secondary">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            Upload
-                        </button>
-                        <button id="loadSampleBtn" class="btn btn-secondary">Sample</button>
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Alert Messages -->
+            <div x-show="alert.show" x-transition class="mb-6" x-cloak>
+                <div :class="`rounded-lg p-4 ${alert.type === 'error' ? 'bg-error-50 text-error-700 border border-error-200' : 
+                                                  alert.type === 'success' ? 'bg-success-50 text-success-700 border border-success-200' : 
+                                                  'bg-primary-50 text-primary-700 border border-primary-200'}`">
+                    <div class="flex items-center">
+                        <i :class="`mr-2 ${alert.type === 'error' ? 'fas fa-exclamation-triangle' : 
+                                          alert.type === 'success' ? 'fas fa-check-circle' : 
+                                          'fas fa-info-circle'}`"></i>
+                        <span x-text="alert.message"></span>
+                        <button @click="alert.show = false" class="ml-auto text-lg hover:opacity-75">×</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                <div class="schema-input-container">
-                    <textarea id="schemaInput" class="schema-input" placeholder="Paste your database schema here...
-
-Example SQL DDL:
-CREATE TABLE customers (
-  id INTEGER PRIMARY KEY,
-  name VARCHAR(255),
-  email VARCHAR(255),
-  country VARCHAR(100)
-);
-
-Or JSON:
-{
-  &quot;customers&quot;: [
-    {&quot;name&quot;: &quot;id&quot;, &quot;type&quot;: &quot;INTEGER&quot;},
-    {&quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;VARCHAR(255)&quot;}
-  ]
-}
-
-Or Natural Language:
-I have a customers table with id, name, email, and country fields"></textarea>
-                </div>
-                
-                <div id="schemaPreview" class="schema-preview hidden">
-                    <h3>Parsed Schema</h3>
-                    <div id="schemaContent" class="schema-content"></div>
-                </div>
-            </section>
-
-            <!-- Query Section -->
-            <section class="query-section">
-                <div class="section-header">
-                    <h2>Natural Language Query</h2>
-                    <div class="query-actions">
-                        <select id="dialectSelect" class="select-input">
-                            <option value="postgresql">PostgreSQL</option>
-                            <option value="mysql">MySQL</option>
-                            <option value="sqlite">SQLite</option>
-                            <option value="sqlserver">SQL Server</option>
-                            <option value="oracle">Oracle</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="query-input-container">
-                    <textarea id="queryInput" class="query-input" placeholder="Ask anything about your data in plain English...
-
-Examples:
-• Show me all customers from USA
-• What's the total revenue by product category?
-• Find the top 10 customers by order value
-• Which products are running low on stock?
-• Calculate the average order value per country"></textarea>
-                    
-                    <div class="query-suggestions" id="querySuggestions">
-                        <!-- Suggestions will be added dynamically -->
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <button id="generateBtn" class="btn btn-primary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="5 3 19 12 5 21 5 3"/>
-                        </svg>
-                        Generate SQL
-                    </button>
-                    <button id="executeBtn" class="btn btn-success" disabled>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        Execute Query
-                    </button>
-                    <button id="optimizeBtn" class="btn btn-secondary" disabled>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.35-4.35"/>
-                        </svg>
-                        Optimize
-                    </button>
-                    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
-                </div>
-            </section>
-
-            <!-- Results Section -->
-            <section class="results-section">
-                <div class="tabs">
-                    <button class="tab active" data-tab="sql">SQL Query</button>
-                    <button class="tab" data-tab="explanation">Explanation</button>
-                    <button class="tab" data-tab="results">Results</button>
-                    <button class="tab" data-tab="optimization">Optimization</button>
-                </div>
-                
-                <div class="tab-content">
-                    <!-- SQL Tab -->
-                    <div id="sqlTab" class="tab-pane active">
-                        <div class="sql-header">
-                            <div class="confidence-badge" id="confidenceBadge">
-                                Confidence: <span id="confidenceValue">-</span>
+                <!-- Left Sidebar - File Management -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-folder-open mr-2 text-primary-500"></i>File Manager
+                        </h2>
+                        
+                        <!-- File Upload Area -->
+                        <div class="mb-6">
+                            <div @drop.prevent="handleFileDrop($event)"
+                                 @dragover.prevent="$event.currentTarget.classList.add('file-drag-over')"
+                                 @dragleave.prevent="$event.currentTarget.classList.remove('file-drag-over')"
+                                 @dragend.prevent="$event.currentTarget.classList.remove('file-drag-over')"
+                                 class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors cursor-pointer">
+                                <input type="file" multiple accept="*" @change="handleFileSelect($event)" class="hidden" x-ref="fileInput">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600 mb-2">Drag & drop files here</p>
+                                <p class="text-sm text-gray-500 mb-3">or</p>
+                                <button @click="$refs.fileInput.click()" 
+                                        class="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors">
+                                    Select Files
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2">Max 4 files, 30MB each</p>
+                                <p class="text-xs text-gray-500">Supports: Excel, CSV, PDF, Word, SQL, JSON</p>
                             </div>
-                            <button id="copySqlBtn" class="btn-icon" title="Copy SQL">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                </svg>
-                            </button>
+                            
+                            <!-- Upload Progress -->
+                            <div x-show="uploadProgress.show" class="mt-4" x-transition>
+                                <div class="bg-gray-200 rounded-full h-2">
+                                    <div class="bg-primary-500 h-2 rounded-full transition-all duration-300" 
+                                         :style="`width: ${uploadProgress.percent}%`"></div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1" x-text="uploadProgress.message"></p>
+                            </div>
                         </div>
-                        <pre id="sqlOutput" class="sql-output"><code>-- Your generated SQL will appear here</code></pre>
                         
-                        <div id="alternativeQueries" class="alternative-queries hidden">
-                            <h4>Alternative Queries</h4>
-                            <div id="alternativeList"></div>
+                        <!-- Uploaded Files -->
+                        <div class="space-y-2">
+                            <template x-for="file in uploadedFiles" :key="file.id">
+                                <div class="bg-gray-50 rounded-lg p-3 border">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900 text-sm" x-text="file.originalName"></h4>
+                                            <div class="flex items-center mt-1 space-x-2 text-xs text-gray-500">
+                                                <span :class="`px-2 py-0.5 rounded text-xs ${
+                                                    file.type === 'schema' ? 'bg-blue-100 text-blue-700' :
+                                                    file.type === 'data' ? 'bg-green-100 text-green-700' :
+                                                    file.type === 'mixed' ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-gray-100 text-gray-700'
+                                                }`" x-text="file.type.toUpperCase()"></span>
+                                                <span x-text="formatFileSize(file.size)"></span>
+                                            </div>
+                                            <div class="mt-1 text-xs text-gray-500" x-show="file.metadata.rowCount">
+                                                <span x-text="file.metadata.rowCount"></span> rows, 
+                                                <span x-text="file.metadata.columns?.length || 0"></span> columns
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <button @click="toggleFileSelection(file.id)" 
+                                                    :class="`p-1 rounded hover:bg-gray-200 ${selectedFiles.includes(file.id) ? 'text-primary-600' : 'text-gray-400'}`">
+                                                <i class="fas fa-check text-xs"></i>
+                                            </button>
+                                            <button @click="deleteFile(file.id)" 
+                                                    class="p-1 rounded hover:bg-gray-200 text-red-500">
+                                                <i class="fas fa-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <div x-show="uploadedFiles.length === 0" class="text-center text-gray-500 py-4">
+                                <i class="fas fa-inbox text-2xl mb-2"></i>
+                                <p class="text-sm">No files uploaded yet</p>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Explanation Tab -->
-                    <div id="explanationTab" class="tab-pane">
-                        <div id="explanationContent" class="explanation-content">
-                            <p>Generate a query to see the explanation...</p>
-                        </div>
-                        
-                        <div id="warnings" class="warnings hidden">
-                            <h4>⚠️ Warnings</h4>
-                            <ul id="warningsList"></ul>
-                        </div>
-                    </div>
-                    
-                    <!-- Results Tab -->
-                    <div id="resultsTab" class="tab-pane">
-                        <div id="executionStats" class="execution-stats hidden">
-                            <span>Rows: <strong id="rowCount">0</strong></span>
-                            <span>Time: <strong id="execTime">0ms</strong></span>
-                            <button id="exportBtn" class="btn-icon" title="Export Results">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                    <polyline points="7 10 12 15 17 10"/>
-                                    <line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        <div id="resultsTable" class="results-table-container">
-                            <p>Execute a query to see results...</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Optimization Tab -->
-                    <div id="optimizationTab" class="tab-pane">
-                        <div id="optimizationContent" class="optimization-content">
-                            <p>Click "Optimize" to see optimization suggestions...</p>
+                    <!-- Quick Stats -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-chart-bar mr-2 text-primary-500"></i>Session Stats
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Files Uploaded</span>
+                                <span class="font-semibold" x-text="uploadedFiles.length"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Queries Executed</span>
+                                <span class="font-semibold" x-text="queriesExecuted"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Selected Files</span>
+                                <span class="font-semibold" x-text="selectedFiles.length"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </div>
 
-        <!-- Loading Overlay -->
-        <div id="loadingOverlay" class="loading-overlay hidden">
-            <div class="loading-content">
-                <div class="spinner"></div>
-                <p id="loadingMessage">Processing...</p>
+                <!-- Main Query Interface -->
+                <div class="lg:col-span-9">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-magic mr-3 text-primary-500"></i>Natural Language Query
+                        </h2>
+                        
+                        <!-- Query Input -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Describe what you want to find:</label>
+                            <textarea x-model="query" 
+                                      placeholder="e.g., Show me the total sales by region for the last quarter, or Find customers who made more than 3 orders..."
+                                      class="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                                      :disabled="loading"></textarea>
+                        </div>
+                        
+                        <!-- Query Options -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SQL Dialect</label>
+                                <select x-model="dialect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                                    <option value="postgresql">PostgreSQL</option>
+                                    <option value="mysql">MySQL</option>
+                                    <option value="sqlite">SQLite</option>
+                                    <option value="sqlserver">SQL Server</option>
+                                    <option value="oracle">Oracle</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Options</label>
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" x-model="executeQuery" class="mr-2">
+                                        <span class="text-sm">Execute Query</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" x-model="useCache" class="mr-2">
+                                        <span class="text-sm">Use Cache</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Selected Files</label>
+                                <div class="text-sm text-gray-600">
+                                    <span x-text="selectedFiles.length"></span> of <span x-text="uploadedFiles.length"></span> files
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Generate Button -->
+                        <div class="mb-6">
+                            <button @click="generateSQL()" 
+                                    :disabled="loading || !query.trim()"
+                                    :class="`w-full py-4 px-6 rounded-lg font-semibold text-white transition-all ${
+                                        loading || !query.trim()
+                                            ? 'bg-gray-400 cursor-not-allowed' 
+                                            : 'bg-primary-500 hover:bg-primary-600 hover:shadow-lg transform hover:-translate-y-0.5'
+                                    }`">
+                                <span x-show="!loading" class="flex items-center justify-center">
+                                    <i class="fas fa-magic mr-2"></i>Generate SQL Query
+                                </span>
+                                <span x-show="loading" class="flex items-center justify-center">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Generating...
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Results -->
+                        <div x-show="result" x-transition class="space-y-6">
+                            
+                            <!-- Generated SQL -->
+                            <div class="bg-gray-50 rounded-lg">
+                                <div class="flex items-center justify-between p-4 border-b">
+                                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                        <i class="fas fa-code mr-2 text-primary-500"></i>Generated SQL
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span x-show="result?.confidence" 
+                                              :class="`px-2 py-1 rounded text-xs font-medium ${
+                                                  result?.confidence >= 0.8 ? 'bg-success-100 text-success-700' :
+                                                  result?.confidence >= 0.6 ? 'bg-warning-100 text-warning-700' :
+                                                  'bg-error-100 text-error-700'
+                                              }`">
+                                            Confidence: <span x-text="Math.round((result.confidence || 0) * 100)"></span>%
+                                        </span>
+                                        <button @click="copyToClipboard(result.sql)" 
+                                                class="text-gray-500 hover:text-primary-500 transition-colors">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <pre class="code-editor bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto" x-text="result?.sql"></pre>
+                                </div>
+                            </div>
+                            
+                            <!-- Explanation -->
+                            <div x-show="result?.explanation" class="bg-blue-50 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold text-blue-900 mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb mr-2"></i>Explanation
+                                </h3>
+                                <p class="text-blue-800" x-text="result.explanation"></p>
+                            </div>
+                            
+                            <!-- Warnings -->
+                            <div x-show="result?.warnings?.length" class="bg-warning-50 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold text-warning-900 mb-2 flex items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Warnings
+                                </h3>
+                                <ul class="list-disc list-inside text-warning-800 space-y-1">
+                                    <template x-for="warning in result?.warnings" :key="warning">
+                                        <li x-text="warning"></li>
+                                    </template>
+                                </ul>
+                            </div>
+                            
+                            <!-- Execution Results -->
+                            <div x-show="result?.execution" class="bg-gray-50 rounded-lg">
+                                <div class="flex items-center justify-between p-4 border-b">
+                                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                        <i class="fas fa-table mr-2 text-primary-500"></i>Query Results
+                                        <span x-show="result?.execution?.rows?.length" 
+                                              class="ml-2 px-2 py-1 bg-primary-100 text-primary-700 text-sm rounded">
+                                            <span x-text="result.execution.rows.length"></span> rows
+                                        </span>
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-500">
+                                            Processed in <span x-text="result?.processingTime"></span>ms
+                                        </span>
+                                        <button @click="exportResults('csv')" 
+                                                class="text-gray-500 hover:text-primary-500 transition-colors"
+                                                title="Export as CSV">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <div x-show="result?.execution?.error" class="text-error-600 mb-4">
+                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        <span x-text="result.execution.error"></span>
+                                    </div>
+                                    <div x-show="result?.execution?.rows?.length" class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <template x-for="column in Object.keys(result?.execution?.rows[0] || {})" :key="column">
+                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" 
+                                                            x-text="column"></th>
+                                                    </template>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <template x-for="(row, index) in (result?.execution?.rows || []).slice(0, 100)" :key="index">
+                                                    <tr class="hover:bg-gray-50">
+                                                        <template x-for="column in Object.keys(row)" :key="column">
+                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" 
+                                                                x-text="row[column]"></td>
+                                                        </template>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                        <div x-show="(result?.execution?.rows?.length || 0) > 100" 
+                                             class="text-center py-4 text-gray-500 text-sm">
+                                            Showing first 100 rows of <span x-text="result.execution.rows.length"></span> total rows
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </main>
 
-        <!-- API Key Modal -->
-        <div id="apiKeyModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>OpenAI API Configuration</h3>
-                    <button class="close-btn">&times;</button>
+        <!-- Settings Modal -->
+        <div x-show="showSettings" x-transition.opacity class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showSettings = false">
+            <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Settings</h2>
+                    <button @click="showSettings = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="openaiApiKey">OpenAI API Key <span style="color: red;">*</span></label>
-                        <input type="password" id="openaiApiKey" class="input" placeholder="sk-..." required>
-                        <small>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">OpenAI API Key</label>
+                        <input type="password" x-model="settings.apiKey" 
+                               placeholder="Enter your OpenAI API key"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <p class="text-xs text-gray-500 mt-1">Required for AI-powered SQL generation</p>
                     </div>
-                    <div class="form-group">
-                        <label for="openaiModel">Model</label>
-                        <select id="openaiModel" class="select-input">
-                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast & Cheap)</option>
-                            <option value="gpt-4">GPT-4 (Most Capable)</option>
-                            <option value="gpt-4-turbo-preview">GPT-4 Turbo (Latest)</option>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                        <select x-model="settings.model" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="apiEndpoint">API Endpoint (Optional)</label>
-                        <input type="text" id="apiEndpoint" class="input" placeholder="http://localhost:3000">
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button @click="showSettings = false" 
+                                class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button @click="saveSettings()" 
+                                class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                            Save Settings
+                        </button>
                     </div>
-                    <div id="apiKeyStatus" class="api-status hidden">
-                        <div class="status-message"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="validateApiKey" class="btn btn-secondary">Validate Key</button>
-                    <button id="saveApiKey" class="btn btn-primary" disabled>Save & Connect</button>
-                    <button class="btn btn-secondary close-btn">Cancel</button>
                 </div>
             </div>
         </div>
-
-        <!-- Query History Modal -->
-        <div id="historyModal" class="modal hidden">
-            <div class="modal-content modal-large">
-                <div class="modal-header">
-                    <h3>Query History</h3>
-                    <button class="close-btn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div id="historyList" class="history-list">
-                        <!-- History items will be added dynamically -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="clearHistory" class="btn btn-danger">Clear History</button>
-                    <button class="btn btn-secondary close-btn">Close</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Toast Notifications -->
-        <div id="toastContainer" class="toast-container"></div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+id,name,description,sku,category_id,price,cost,inventory_quantity,weight,is_active
+1,"MacBook Pro 16""","High-performance laptop for professionals",MBP-16-001,1,2499.00,1800.00,25,4.3,1
+2,"Dell XPS 13","Ultrabook with premium design",XPS-13-001,1,1299.00,900.00,40,2.8,1
+3,"Logitech MX Master 3","Wireless productivity mouse",MX3-001,2,99.99,45.00,150,0.14,1
+4,"Apple Magic Keyboard","Wireless keyboard for Mac",AMK-001,2,129.99,70.00,80,0.5,1
+5,"Samsung 32"" 4K Monitor","4K UHD monitor for professionals",SAM-32-4K,3,599.99,350.00,20,15.2,1
+6,"LG 27"" Gaming Monitor","High refresh rate gaming display",LG-27-GM,3,399.99,250.00,35,12.8,1
+7,"Sony WH-1000XM5","Noise-canceling wireless headphones",SONY-WH5,4,399.99,200.00,60,0.55,1
+8,"AirPods Pro","Apple's premium wireless earbuds",APP-PRO,4,249.99,120.00,100,0.12,1
+9,"iPhone 15 Pro","Latest Apple smartphone",IP15-PRO,5,999.99,650.00,75,0.42,1
+10,"Samsung Galaxy S24","Android flagship smartphone",SGS-24,5,899.99,580.00,90,0.39,1
+11,"iPad Air","Versatile tablet for work and play",IPA-AIR,6,599.99,380.00,45,1.02,1
+12,"Surface Pro 9","2-in-1 laptop tablet hybrid",SP9-001,6,1099.99,720.00,30,1.96,1
+13,"Canon EOS R5","Professional mirrorless camera",CAN-R5,7,3899.99,2500.00,8,1.62,1
+14,"GoPro Hero 12","Action camera for adventures",GP-H12,7,499.99,280.00,55,0.15,1
+15,"Razer DeathAdder V3","Gaming mouse with precision",RDA-V3,2,69.99,35.00,120,0.18,1
+16,"Mechanical Keyboard RGB","Custom mechanical gaming keyboard",MKB-RGB,2,159.99,85.00,65,2.1,1
+17,"32GB DDR5 RAM Kit","High-speed memory for gaming",DDR5-32,8,299.99,180.00,40,0.2,1
+18,"1TB NVMe SSD","Fast storage solution",NVM-1TB,8,129.99,75.00,85,0.08,1
+19,"NVIDIA RTX 4080","High-end graphics card",RTX-4080,8,1199.99,800.00,15,5.4,1
+20,"Portable Charger 20000mAh","High-capacity power bank",PC-20K,9,49.99,22.00,200,1.1,1

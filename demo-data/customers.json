@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "city": "New York",
+    "state": "NY"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "city": "Los Angeles",
+    "state": "CA"
+  },
+  {
+    "id": 3,
+    "name": "Bob Johnson",
+    "email": "bob@example.com",
+    "city": "Chicago",
+    "state": "IL"
+  },
+  {
+    "id": 4,
+    "name": "Alice Brown",
+    "email": "alice@example.com",
+    "city": "Houston",
+    "state": "TX"
+  },
+  {
+    "id": 5,
+    "name": "Charlie Wilson",
+    "email": "charlie@example.com",
+    "city": "Phoenix",
+    "state": "AZ"
+  }
+]

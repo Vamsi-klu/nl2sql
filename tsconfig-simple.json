@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "noEmitOnError": false
+  },
+  "include": [
+    "src/simple-demo.ts",
+    "src/file-processing/simple-processor.ts",
+    "src/utils/logger.ts",
+    "src/NL2SQL.ts",
+    "src/sqlite/db.ts",
+    "src/schema/introspect.ts",
+    "src/parser/intent.ts",
+    "src/optimizer/optimizer.ts",
+    "src/generator/sql.ts",
+    "src/explain/explainer.ts",
+    "src/ir/types.ts"
+  ]
+}
